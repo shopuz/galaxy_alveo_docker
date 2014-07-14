@@ -13,36 +13,10 @@ RUN apt-get update
 ENV APACHE_RUN_USER www-data
 ENV APACHE_RUN_GROUP www-data
 ENV APACHE_LOG_DIR /var/log/apache2
+ENV GALAXY_HOME /mnt/galaxy/galaxy-app
 
 # Install all requirements that are recommend by the Galaxy project
-RUN apt-get install  -y autoconf
-RUN apt-get install  -y automake
-RUN apt-get install  -y build-essential
-RUN apt-get install  -y gfortran
-RUN apt-get install  -y cmake
-RUN apt-get install  -y git-core
-RUN apt-get install  -y libatlas-base-dev
-RUN apt-get install  -y libblas-dev
-RUN apt-get install  -y liblapack-dev
-RUN apt-get install  -y mercurial
-RUN apt-get install  -y subversion
-RUN apt-get install  -y python-dev
-RUN apt-get install  -y pkg-config
-RUN apt-get install  -y openjdk-7-jre
-RUN apt-get install  -y python-setuptools
-RUN apt-get install  -y python-pip
-RUN apt-get install  -y r-base
-RUN apt-get install  -y wget
-
-
-# Used to get Galaxy running in Docker with Apache2 and PostgreSQL
-RUN apt-get install  -y postgresql
-RUN apt-get install  -y apache2
-RUN apt-get install  -y libapache2-mod-xsendfile
-RUN apt-get install  -y sudo
-
-# samtools is used to handle BAM files inside of Galaxy
-RUN apt-get install  -y samtools
+RUN apt-get install  -y autoconf automake build-essential gfortran cmake git-core libatlas-base-dev libblas-dev liblapack-dev mercurial subversion python-dev pkg-config openjdk-7-jre python-setuptools python-pip r-base wget postgresql apache2 libapache2-mod-xsendfile sudo samtools python-tk flex xvfb openssh-client openssh-server sysv-rc-conf
 
 # Load required Apache Modules
 RUN a2enmod xsendfile
@@ -74,15 +48,15 @@ CMD R CMD [install.packages],["latticeExtra"],[repos="http://cran.ms.unimelb.edu
 CMD R CMD [install.packages],["gridExtra"],[repos="http://cran.ms.unimelb.edu.au/"]
 
 # Setup NLTK
-RUN sudo pip install -U numpy
+RUN sudo pip install -U numpy pyyaml nltk
 RUN sudo easy_install -U distribute
-#RUN sudo pip install -U pyyaml nltk
-#RUN sudo mkdir /usr/share/nltk_data
-#RUN sudo python -m nltk.downloader -d /usr/share/nltk_data all
+RUN sudo mkdir /usr/share/nltk_data
+RUN sudo python -m nltk.downloader -d /usr/share/nltk_data all
+
+# Install the JC Parser NLTK wrapper
+RUN sudo git clone git://github.com/IntersectAustralia/jcp-nltk-wrapper.git
 
 # Install the Johnson Charniak Parser
-RUN sudo apt-get install flex -y
-WORKDIR /mnt/galaxy
 RUN sudo wget http://web.science.mq.edu.au/~mjohnson/code/reranking-parser-2011-12-17.tgz
 RUN sudo tar -zxvf reranking-parser-2011-12-17.tgz
 RUN sudo chown -R galaxy reranking-parser
@@ -92,50 +66,29 @@ RUN sudo cp -f /tmp/best-parses.cc /mnt/galaxy/reranking-parser/second-stage/pro
 WORKDIR /mnt/galaxy/reranking-parser
 RUN sudo make
 
-# Install the JC Parser NLTK wrapper
-WORKDIR /mnt/galaxy
-RUN sudo apt-get install python-tk -y
-RUN sudo git clone git://github.com/IntersectAustralia/jcp-nltk-wrapper.git
-#RUN sudo cp /mnt/galaxy/jcp-nltk-wrapper/parse/* /usr/local/lib/python2.7/dist-packages/nltk/parse
+RUN sudo cp /mnt/galaxy/jcp-nltk-wrapper/parse/* /usr/local/lib/python2.7/dist-packages/nltk/parse
 
-#ADD ./johnsoncharniak.ini /tmp/johnsoncharniak.ini
-#ADD ./johnsoncharniak.py /tmp/johnsoncharniak.py
-#RUN sudo cp -f /tmp/johnsoncharniak.ini /usr/local/lib/python2.7/dist-packages/nltk/parse/
-#RUN sudo cp -f /tmp/johnsoncharniak.py /usr/local/lib/python2.7/dist-packages/nltk/parse/
-
+ADD ./johnsoncharniak.ini /tmp/johnsoncharniak.ini
+ADD ./johnsoncharniak.py /tmp/johnsoncharniak.py
+RUN sudo cp -f /tmp/johnsoncharniak.ini /usr/local/lib/python2.7/dist-packages/nltk/parse/
+RUN sudo cp -f /tmp/johnsoncharniak.py /usr/local/lib/python2.7/dist-packages/nltk/parse/
 
 #Set up for displaying parse trees
-
-RUN sudo apt-get install xvfb -y
 RUN export DISPLAY=:1
 RUN Xvfb :1 -screen 0 1024x768x24 &
 #RUN sudo xhost +
 #RUN sudo echo "export DISPLAY=:1" >> ~/.bashrc
 
-RUN sudo apt-get install -y openssh-client
-RUN sudo apt-get install -y openssh-server
-
-
 # Set up server environment variable configuration
 RUN sudo touch /etc/ssh/sshd_config
 RUN sudo echo "PermitUserEnvironment yes" >> /etc/ssh/sshd_config
 RUN sudo service ssh restart
-#RUN mkdir ~/.ssh
-#RUN sudo touch ~/.ssh/environment
-#RUN sudo echo "GALAXY_HOME=/mnt/galaxy/galaxy-app" >> ~/.ssh/environment
-RUN sudo echo "GALAXY_HOME=/mnt/galaxy/galaxy-app" >> ~/.bashrc
-RUN sudo /bin/bash -c "source ~/.bashrc"
-
-ENV GALAXY_HOME /mnt/galaxy/galaxy-app
 
 # Configure Galaxy to use the Tool Shed
 ADD ./universe_wsgi.ini /tmp/universe_wsgi.ini
 RUN cp -f /tmp/universe_wsgi.ini /mnt/galaxy/galaxy-app/universe_wsgi.ini
 
-
-
 # Setup Toolshed
-RUN sudo apt-get install sysv-rc-conf -y
 #RUN sudo createuser -U postgres -P toolshed
 #RUN sudo createdb -U postgres toolshed
 
@@ -153,7 +106,6 @@ RUN sudo sed -i 's/run\.sh/run_tool_shed\.sh/g' /etc/init.d/toolshed
 
 # Configure APACHE
 RUN sudo update-rc.d toolshed defaults
-RUN sudo a2enmod rewrite
 RUN sudo sysv-rc-conf apache2 on
 RUN sudo cp tool_sheds_conf.xml.sample tool_sheds_conf.xml
 RUN sudo cp shed_tool_conf.xml.sample shed_tool_conf.xml
@@ -192,7 +144,6 @@ ADD ./export_user_files.py /mnt/galaxy/galaxy-app/export_user_files.py
 
 #RUN cp /tmp/ctb.apache.conf /etc/apache2/sites-available/
 
-
 #RUN a2ensite ctb.apache.conf
 #RUN sudo /etc/init.d/apache2 restart
 #RUN service postgresql stop
@@ -226,7 +177,7 @@ RUN sudo /etc/init.d/apache2 restart
 ADD ./startup.sh /usr/bin/startup
 
 RUN chmod +x /usr/bin/startup
-
+RUN sudo apt-get install -y python-pycurl
 # Autostart script that is invoked during container start
 CMD ["/usr/bin/startup"]
 #RUN rm ./.hg/ -rf
