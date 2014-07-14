@@ -1,0 +1,3 @@
+SERVICE_NAME="toolshed"
+RUN_AS="galaxy"
+RUN_IN="/mnt/galaxy/galaxy-app"
