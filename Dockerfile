@@ -105,6 +105,7 @@ RUN sudo git clone git://github.com/IntersectAustralia/jcp-nltk-wrapper.git
 
 
 #Set up for displaying parse trees
+
 RUN sudo apt-get install xvfb -y
 RUN export DISPLAY=:1
 RUN Xvfb :1 -screen 0 1024x768x24 &
@@ -126,9 +127,11 @@ RUN sudo echo "GALAXY_HOME=/mnt/galaxy/galaxy-app" >> ~/.bashrc
 RUN sudo /bin/bash -c "source ~/.bashrc"
 
 ENV GALAXY_HOME /mnt/galaxy/galaxy-app
+
 # Configure Galaxy to use the Tool Shed
 ADD ./universe_wsgi.ini /tmp/universe_wsgi.ini
 RUN cp -f /tmp/universe_wsgi.ini /mnt/galaxy/galaxy-app/universe_wsgi.ini
+
 
 
 # Setup Toolshed
@@ -176,6 +179,7 @@ RUN sed -i 's|#brand = None|brand = Galaxy Docker Build|g' /mnt/galaxy/galaxy-ap
 
 # Define the default postgresql database path
 # If you want to save your data locally you need to set GALAXY_DOCKER_MODE=HOST
+
 ENV PG_DATA_DIR_DEFAULT /var/lib/postgresql/9.1/main/
 
 # Include all needed scripts from the host
@@ -184,6 +188,7 @@ ADD ./create_galaxy_user.py /mnt/galaxy/galaxy-app/create_galaxy_user.py
 ADD ./export_user_files.py /mnt/galaxy/galaxy-app/export_user_files.py
 #ADD ./export_user_files.py /mnt/galaxy/galaxy-app/export_user_files.py
 #ADD ./ctb.apache.conf /tmp/ctb.apache.conf
+
 
 #RUN cp /tmp/ctb.apache.conf /etc/apache2/sites-available/
 
@@ -196,6 +201,7 @@ ADD ./export_user_files.py /mnt/galaxy/galaxy-app/export_user_files.py
 # 1. Remove all old configuration
 # 2. Create DB-user 'galaxy' with password 'galaxy' in database 'galaxy'
 # 3. Create Galaxy Admin User 'admin@galaxy.org' with password 'admin' and API key 'admin'
+
 RUN service postgresql stop
 RUN rm $PG_DATA_DIR_DEFAULT -rf
 RUN python setup_postgresql.py --dbuser galaxy --dbpassword galaxy --db-name galaxy --dbpath $PG_DATA_DIR_DEFAULT
@@ -216,6 +222,7 @@ ADD ./galaxy_vhost.conf /tmp/galaxy_vhost.conf
 RUN cp /tmp/galaxy_vhost.conf /etc/apache2/sites-available/galaxy_vhost.conf
 
 RUN sudo /etc/init.d/apache2 restart
+
 ADD ./startup.sh /usr/bin/startup
 
 RUN chmod +x /usr/bin/startup
@@ -224,4 +231,3 @@ RUN chmod +x /usr/bin/startup
 CMD ["/usr/bin/startup"]
 #RUN rm ./.hg/ -rf
 #RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
