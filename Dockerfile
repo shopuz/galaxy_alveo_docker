@@ -7,7 +7,7 @@ FROM ubuntu:12.10
 MAINTAINER Suren Shrestha, shopuz@gmail.com
 
 # make sure the package repository is up to date
-RUN apt-get update
+# RUN apt-get update
 
 # Set Apache User and Group
 ENV APACHE_RUN_USER www-data
