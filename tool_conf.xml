@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='utf-8'?>
+<toolbox>
+  <section name="Tool Generator" id="tool_generator">
+    <tool file="toolfactory/rgToolFactory.xml" />
+  </section>
+  <section id="getext" name="Get Data">
+    <tool file="data_source/upload.xml" />
+    <tool file="data_source/Concatenator.xml" />
+    <tool file="data_source/hcsvlab_importer.xml" />
+    <tool file="data_source/hcsvlab_data_importer.xml" />
+  </section>
+  <section name="NLTK Tools" id="nltk_tools">
+    <tool file="nltk/ReadSents.xml" />
+    <tool file="nltk/Tokenizer.xml" />
+    <tool file="nltk/POS.xml" />
+    <tool file="nltk/Stemmer.xml" />
+    <tool file="nltk/Collocation.xml" />
+    <tool file="nltk/ChartParser.xml" />
+  </section>
+  <section name="Analyse Data" id="analysis_tools">
+    <tool file="freq/Frequency.xml" />
+    <tool file="pargram/xle-web.xml" />
+  </section>
+  <section name="Johnson-Charniak Parser Tools" id="jc_parser_tools">
+    <tool file="jc_parser/JCParser.xml" />
+  </section>
+  <section name="ParseEval" id="parse_eval">
+    <tool file="parse_eval/ParseEval.xml" />
+  </section>
+  <section name="PsySound" id="psysound">
+    <tool file="psysound/build_fhs.xml" />    
+    <tool file="psysound/run_hilbert.xml" />
+    <tool file="psysound/run_fft.xml" />
+    <tool file="psysound/run_slm.xml" />
+    <tool file="psysound/make_plot.xml" />
+  </section>
+</toolbox>

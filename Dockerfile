@@ -84,6 +84,13 @@ RUN sudo touch /etc/ssh/sshd_config
 RUN sudo echo "PermitUserEnvironment yes" >> /etc/ssh/sshd_config
 RUN sudo service ssh restart
 
+# Set up tool factory
+WORKDIR /mnt/galaxy/galaxy-app/tools
+RUN hg clone http://toolshed.g2.bx.psu.edu/repos/fubar/toolfactory
+
+ADD ./tool_conf.xml /tmp/tool_conf.xml
+RUN cp -f /tmp/tool_conf.xml /mnt/galaxy/galaxy-app/tool_conf.xml
+
 # Configure Galaxy to use the Tool Shed
 ADD ./universe_wsgi.ini /tmp/universe_wsgi.ini
 RUN cp -f /tmp/universe_wsgi.ini /mnt/galaxy/galaxy-app/universe_wsgi.ini
