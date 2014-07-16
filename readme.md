@@ -69,7 +69,7 @@ Click on Tool Generator on the Left panel and then click on Tool Factory.
 3. Select ``Generate a Galaxy Toolshed compatible toolshed.gz`` for creating downloadable tool in the section **Create a tar.gz file ready for local toolshed entry**.
 4. You can leave other options as default except the **Interpreter** where you should select ``Python``.
 5. Paste the following code into the text box:
-``
+```
 # reverse order of columns in a tabular file
 import sys
 inp = sys.argv[1]
@@ -83,18 +83,18 @@ o.write('\t'.join(rs))
 o.write('\n')
 i.close()
 o.close()
-``
+```
 
 6. Finally Click on ``Execute`` button.
 7. This should successfully create the new tool. 
 8. From the right pane click on ``ReverseText.toolshed.gz`` and click on ``Save`` button to download the compressed file.
 9. Uncompress the file and put it under ``vagrant_galaxy/new_tools``.
 10. Edit the tool_conf.xml and add the following code :
-``
+```
 <section name="Reverse Text" id="reverse_text">
     <tool file="new_tools/ReverseText/ReverseText.xml" />
 </section>
-``
+```
 
 11. Finally run the command:
 `` docker run -i -t -p 8000:8080 -v /vagrant/new_tools:/mnt/galaxy/galaxy-app/tools/new_tools -v /vagrant/new_tools/tool_conf.xml:/mnt/galaxy/galaxy-app/tool_conf.xml shopuz/galaxy_alveo_docker``
