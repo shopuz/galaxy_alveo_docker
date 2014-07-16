@@ -40,7 +40,7 @@ As you can see, we are creating a ubuntu-raring OS for our virtual machine insid
 4. Log into the virtual machine with ``vagrant ssh``
 
 5. Now that we are inside the virtual machine, lets install ``Docker``. Issue the following commands to do so.
-``
+```
 # Install Docker with LXC
 sudo apt-get install linux-image-extra-$(uname -r) software-properties-common
 sudo sh -c "wget -qO- https://get.docker.io/gpg | apt-key add -"
@@ -48,7 +48,7 @@ sudo sh -c "echo deb http://get.docker.io/ubuntu docker main > /etc/apt/sources.
 sudo apt-get update
 sudo apt-get install lxc-docker
 
-``
+```
 
 6. After the docker is installed, now lets start using this image. Just issue the command ``docker run -d -p 8000:8080 shopuz/galaxy_alveo_docker``. To explain the command, it will run the image named shopuz/galaxy_alveo_docker in daemon mode (-d) by binding the port 8000 of host with 8080 of the docker image (-p 8000:8080). Wait a few minutes and go to your web browser to ``localhost:8000`` to see the galaxy alveo instance.
 
