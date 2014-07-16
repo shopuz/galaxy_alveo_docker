@@ -1,136 +1,117 @@
-Galaxy Docker Image
-===================
+Vagrant + Galaxy + Alveo + Docker
+==================================
+This is an attempt to create and distribute a configured galaxy instance as a Docker instance. [Galaxy](http://galaxyproject.org) is configured with a number of tools provided at ``The Alveo Project`` [alveo.edu.au](alveo.edu.au).
 
-The [Galaxy](www.galaxyproject.org) [Docker](www.docker.io) Image is an easy distributable full-fledged Galaxy installation, that can be used for testing, teaching and presenting new tools and features.
-
-One of the main goals is to make the access to entire tool suites as easy as possible. Usually, 
-this includes the setup of a public available webservice that needs to be maintained, or that the Tool-user needs to either setup a Galaxy Server by its own or to have Admin access to a local Galaxy server. 
-With docker, tool developers can create their own Image with all dependencies and the user only needs to run it within docker.
-
-The Image is based on [Debian/wheezy](http://www.debian.org/). and all recommended Galaxy requirements are installed.
+Docker is an open platform for distributed applications. It provides an easy mechanism to create and distribute isolated self-contained images. More information about it is available at ``[Docker's Website](https://www.docker.com/)``.
 
 
-Usage
-=====
+## Required Tools
+1. Vagrant - lightweight, reproducible and portable development environments
+2. Galaxy - open, web-based platform for data intensive research
+3. Docker - open platform for distributed applications for developers and sysadmins
 
-At first you need to install docker. Please follow the instruction on https://www.docker.io/gettingstarted/#h_installation
+## Usage
+1. Create Vagrant virtualbox
+First of all, lets create a virtualbox with vagrant inside which we will install docker and start using this image. To install vagrant, go to this page - [http://www.vagrantup.com/downloads](http://www.vagrantup.com/downloads) and download the suitable installer according to your OS. 
 
-After the successful installation, all what you need to do is:
+2. After installing vagrant, in order to create a virtual machine, we need a Vagrantfile. Create a folder named 'vagrant_galaxy' anywhere that you want to reside the virtual machine at. Open up your terminal / command prompt and navigate into the directory that you created. Inside this directory, issue the command ``vagrant init`` to initialize a virtual machine. This will create a file named 'Vagrantfile' inside the directory. 
 
-``docker run -d -p 8080:80 bgruening/galaxy-stable``
-
-I will shortly explain the meaning of all the parameters. For a more detailed describtion please consult the [docker manual](http://docs.docker.io/), it's really worth reading.
-Let's start: ``docker run`` will run the Image/Container for you. In case you do not have the Container stored locally, docker will download it for you. ``-p 8080:80`` will make the port 80 (inside of the container) available on port 8080 on your host. Inside the container a Apache Webserver is running on port 80 and that port can be bound to a local port on your host computer. With this parameter you can access your Galaxy instance via ``http://localhost:8080`` immediately after executing the command above. ``bgruening/galaxy-stable`` is the Image/Container name, that directs docker to the correct path in the [docker index](https://index.docker.io/u/bgruening/galaxy-stable/). ``-d`` will start the docker container in daemon mode. For an interactive session, you can execute:
-
-``docker run -i -t -p 8080:80 bgruening/galaxy-stable``
-
-and run the ``` startup ``` script by your own, to start PostgreSQL, Apache and Galaxy.
-
-Docker images are "read-only", all your changes inside one session will be lost after restart. This mode is usefull to present Galaxy to your collegues or to run workshops with it. To install Tool Shed respositories or to save your data you need to export the calculated data to the host computer.
-
-Fortunately, this is as easy as:
-
-``docker run -d -p 8080:80 -v /home/user/galaxy_storage/:/export/ bgruening/galaxy-stable``
-
-With the additional ``-v /home/user/galaxy_storage/:/export/`` parameter, docker will mount the folder ``/home/user/galaxy_storage`` into the Container under ``/export/``. A ``startup.sh`` script, that is usually starting Apache, PostgreSQL and Galaxy, will recognise the export directory with one of the following outcomes:
-
-  - In case of an empty ``/export/`` directory, it will move the [PostgreSQL](http://www.postgresql.org/) database, the Galaxy database directory, Shed Tools and Tool Dependencies and various config scripts to /export/ and symlink back to the original location.
-  - In case of a non-empty ``/export/``, for example if you continue a previouse session within the same folder, nothing will be moved, but the symlinks will be created.
-
-This enables you to have different export folders for different sessions - means real separation of your different projects.
-
-
-Extending the docker Image
-==========================
-
-If you have your Tools already included in the Tool Shed, building your own personalised Galaxy docker Image can be done using the following steps:
-
- 1. Create a file the name ``Dockerfile``
- 2. Include ``FROM bgruening/galaxy-stable`` at the top of the file. This means that you use the Galaxy Docker Image as base Image and build your own extensions on top of it.
- 3. Install your Tools from the Tool Shed via the ``install_tool_shed_repositories.py`` script.
- 4. execute ``docker build -t='my-docker-test'``
- 5. run your container with ``docker run -d -p 8080:80 my-docker-test``
- 6. open your web browser on ``http://localhost:8080``
-
-For example have a look at the [deepTools](http://deeptools.github.io/) or the [ChemicalToolBox](https://github.com/bgruening/galaxytools/tree/master/chemicaltoolbox) Dockerfile's.
-
-https://github.com/bgruening/docker-recipes/blob/master/galaxy-deeptools/Dockerfile
-https://github.com/bgruening/docker-recipes/blob/master/galaxy-chemicaltoolbox/Dockerfile
+Replace the content of ``Vagrantfile`` with the following code:
 
 ```
-# Galaxy - deepTools
-#
-# VERSION       0.1
+Vagrant.configure("2") do |config|
+  config.vm.box = "raring"
+  config.vm.box_url = "http://cloud-images.ubuntu.com/raring/current/raring-server-cloudimg-vagrant-amd64-disk1.box"
+  # we'll forward the port 8000 from the VM to the port 8000 on the host (OS X)
+  config.vm.network :forwarded_port, host: 8000, guest: 8000
+  config.vm.synced_folder("vagrant_galaxy", "/vagrant")
 
-FROM bgruening/galaxy-stable
-
-MAINTAINER Björn A. Grüning, bjoern.gruening@gmail.com
-
-WORKDIR /galaxy-central
-RUN service postgresql start && service apache2 start && ./run.sh --daemon && sleep 120 && python ./scripts/api/install_tool_shed_repositories.py --api admin -l http://localhost:8080 --url
-
-# Mark one folders as imported from the host.
-VOLUME ["/export/"]
-
-# Expose port 80 to the host
-EXPOSE :80
-
-# Autostart script that is invoked during container start
-CMD ["/usr/bin/startup"]
+  # add a bit more memory, it never hurts. It's VM specific and we're using Virtualbox here.
+  config.vm.provider :virtualbox do |vb|
+    vb.customize ["modifyvm", :id, "--memory", 2048]
+  end
+end
 ```
 
+As you can see, we are creating a ubuntu-raring OS for our virtual machine inside which we shall install docker.
 
-Users & Passwords
-================
+3. Now lets bootup the virtual machine with the command ``vagrant up``. This will download the Ubuntu OS, install on the virtual machine and make it ready for us to work with.
 
-The Galaxy Admin User has the username ``admin@galaxy.org`` and the password ``admin``.
-The PostgreSQL username is ``galaxy``, the password is ``galaxy`` and the database name is ``galaxy`` (I know I was really creative ;)).
-If you want to create new users, please make sure to use the ``/export/`` volume. Otherwise your user will be removed after your docker session is finished.
+4. Log into the virtual machine with ``vagrant ssh``
 
+5. Now that we are inside the virtual machine, lets install ``Docker``. Issue the following commands to do so.
+``
+# Install Docker with LXC
+sudo apt-get install linux-image-extra-$(uname -r) software-properties-common
+sudo sh -c "wget -qO- https://get.docker.io/gpg | apt-key add -"
+sudo sh -c "echo deb http://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list"
+sudo apt-get update
+sudo apt-get install lxc-docker
 
-Requirements
-============
+``
 
-- [docker](https://www.docker.io/gettingstarted/#h_installation)
-
-
-ToDo
-====
-
-- FTP Server
-
-
-History
-=======
-
- - 0.1: Initial release!
-  - with Apache2, PostgreSQL and Tool Shed integration
+6. After the docker is installed, now lets start using this image. Just issue the command ``docker run -d -p 8000:8080 shopuz/galaxy_alveo_docker``. To explain the command, it will run the image named shopuz/galaxy_alveo_docker in daemon mode (-d) by binding the port 8000 of host with 8080 of the docker image (-p 8000:8080). Wait a few minutes and go to your web browser to ``localhost:8000`` to see the galaxy alveo instance.
 
 
-Support & Bug Reports
-=====================
+## Develop and Integrate new Galaxy Tools
+The galaxy instance comes with a tool generator called ``Tool Factory`` by using which we can create new tools to integrate with galaxy. In this tutorial, we will create a new tool (python) which reverses the first line of the text file. First of all, lets upload the input file to galaxy instance. Run the galaxy instance with instructions given above, go to ``localhost:8000``. Log in with email: ``admin@galaxy.org`` and password : ``admin``. 
 
-You can file an issue here https://github.com/bgruening/galaxy_recipes/issues or ask
-us on the Galaxy development list http://lists.bx.psu.edu/listinfo/galaxy-dev
+### Create a text file
+Create a normal text file 'test_file.txt' with one line on it 'This is a test file.'
+
+### Upload Input File
+Click on ``Get Data`` on the left panel and click on ``Upload File``. Click on ``Choose File`` and then upload the text file (test_file.txt) you created above.
+
+### Create the Tool
+Click on Tool Generator on the Left panel and then click on Tool Factory. 
+1. Select the uploaded file from history (test_file.txt)
+2. Name the new tool as ``Reverse Text``
+3. Select ``Generate a Galaxy Toolshed compatible toolshed.gz`` for creating downloadable tool in the section **Create a tar.gz file ready for local toolshed entry**.
+4. You can leave other options as default except the **Interpreter** where you should select ``Python``.
+5. Paste the following code into the text box:
+``
+# reverse order of columns in a tabular file
+import sys
+inp = sys.argv[1]
+outp = sys.argv[2]
+i = open(inp,'r')
+o = open(outp,'w')
+row = i.readline()
+rs = row.rstrip().split('\t')
+rs.reverse()
+o.write('\t'.join(rs))
+o.write('\n')
+i.close()
+o.close()
+``
+
+6. Finally Click on ``Execute`` button.
+7. This should successfully create the new tool. 
+8. From the right pane click on ``ReverseText.toolshed.gz`` and click on ``Save`` button to download the compressed file.
+9. Uncompress the file and put it under ``vagrant_galaxy/new_tools``.
+10. Edit the tool_conf.xml and add the following code :
+``
+<section name="Reverse Text" id="reverse_text">
+    <tool file="new_tools/ReverseText/ReverseText.xml" />
+</section>
+``
+
+11. Finally run the command:
+`` docker run -i -t -p 8000:8080 -v /vagrant/new_tools:/mnt/galaxy/galaxy-app/tools/new_tools -v /vagrant/new_tools/tool_conf.xml:/mnt/galaxy/galaxy-app/tool_conf.xml shopuz/galaxy_alveo_docker``
+
+12. You should see the integrated tool in your browser.
+
+## Further Readings
+Working with volumes in Docker Containers - [https://docs.docker.com/userguide/dockervolumes/](https://docs.docker.com/userguide/dockervolumes/)
 
 
-Licence (MIT)
-=============
+## References
+1. [https://github.com/bgruening/docker-recipes](https://github.com/bgruening/docker-recipes)
+2. [https://ochronus.com/docker-primer-django/](https://ochronus.com/docker-primer-django/)
+3. [https://github.com/kencochrane/django-docker](https://github.com/kencochrane/django-docker)
+4. [Docker CheatSheet](https://gist.github.com/wsargent/7049221#containers)
+5. [First Steps with Docker](http://www.alexecollins.com/content/first-steps-with-docker/)
+6. [Docker Port Forwarding](http://fogstack.wordpress.com/2014/02/09/docker-on-osx-port-forwarding/)
+7. [SSH Docker](http://jpetazzo.github.io/2014/06/23/docker-ssh-considered-evil/)
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
