@@ -2,7 +2,7 @@
 #
 # VERSION       0.1
 
-FROM ubuntu:12.10
+FROM ubuntu:14.04
 
 MAINTAINER Suren Shrestha, shopuz@gmail.com
 
