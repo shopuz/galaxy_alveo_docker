@@ -7,7 +7,7 @@ FROM ubuntu:14.04
 MAINTAINER Suren Shrestha, shopuz@gmail.com
 
 # make sure the package repository is up to date
-# RUN apt-get update
+RUN apt-get update
 
 # Set Apache User and Group
 ENV APACHE_RUN_USER www-data
@@ -16,8 +16,18 @@ ENV APACHE_LOG_DIR /var/log/apache2
 ENV GALAXY_HOME /mnt/galaxy/galaxy-app
 
 # Install all requirements that are recommend by the Galaxy project
-RUN apt-get install  -y autoconf automake build-essential gfortran cmake git-core libatlas-base-dev libblas-dev liblapack-dev mercurial subversion python-dev pkg-config openjdk-7-jre python-setuptools python-pip r-base wget postgresql apache2 libapache2-mod-xsendfile sudo samtools python-tk flex xvfb openssh-client openssh-server sysv-rc-conf
 
+# Install all requirements that are recommend by the Galaxy project
+RUN apt-get install  -y autoconf 
+RUN apt-get install  -y automake 
+#RUN apt-get install  -y build-essential 
+RUN apt-get install  -y gfortran 
+RUN apt-get install  -y cmake 
+RUN apt-get install  -y libatlas-base-dev 
+RUN apt-get install  -y libblas-dev 
+RUN apt-get install  -y liblapack-dev 
+
+RUN apt-get install -y git-core mercurial subversion python-dev pkg-config openjdk-7-jre python-setuptools python-pip r-base wget postgresql apache2 libapache2-mod-xsendfile sudo samtools python-tk flex xvfb sysv-rc-conf
 # Load required Apache Modules
 RUN a2enmod xsendfile
 RUN a2enmod proxy
@@ -51,7 +61,7 @@ CMD R CMD [install.packages],["gridExtra"],[repos="http://cran.ms.unimelb.edu.au
 RUN sudo pip install -U numpy pyyaml nltk
 RUN sudo easy_install -U distribute
 RUN sudo mkdir /usr/share/nltk_data
-RUN sudo python -m nltk.downloader -d /usr/share/nltk_data all
+#RUN sudo python -m nltk.downloader -d /usr/share/nltk_data all
 
 # Install the JC Parser NLTK wrapper
 RUN sudo git clone git://github.com/IntersectAustralia/jcp-nltk-wrapper.git
@@ -82,7 +92,7 @@ RUN Xvfb :1 -screen 0 1024x768x24 &
 # Set up server environment variable configuration
 RUN sudo touch /etc/ssh/sshd_config
 RUN sudo echo "PermitUserEnvironment yes" >> /etc/ssh/sshd_config
-RUN sudo service ssh restart
+#RUN sudo service ssh restart
 
 # Set up tool factory
 WORKDIR /mnt/galaxy/galaxy-app/tools
@@ -182,6 +192,8 @@ RUN cp /tmp/galaxy_vhost.conf /etc/apache2/sites-available/galaxy_vhost.conf
 RUN sudo /etc/init.d/apache2 restart
 
 ADD ./startup.sh /usr/bin/startup
+
+RUN sudo apt-get install -y vim-gnome
 
 RUN chmod +x /usr/bin/startup
 RUN sudo apt-get install -y python-pycurl
